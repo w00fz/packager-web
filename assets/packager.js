@@ -40,6 +40,8 @@ var Packager = this.Packager = {
 				parent.addListener('click', function(){
 					if (component.selected) Packager.deselect(name);
 					else Packager.select(name);
+
+					Packager.setLocationHash();
 				});
 			});
 
@@ -69,12 +71,6 @@ var Packager = this.Packager = {
 				event.stop();
 				Packager.reset();
 			}
-		});
-
-		Packager.link = document.id('packager-link');
-
-		if (Packager.link) Packager.link.addEvent('mouseup', function(){
-			this.select();
 		});
 
 		Packager.fromUrl();
@@ -111,27 +107,29 @@ var Packager = this.Packager = {
 	select: function(name){
 		var component = components[name];
 
+		if (!component){
+			var matches = name.match(/(.+)\/\*$/);
+			if (matches) this.selectPackage(matches[1]);
+			return;
+		}
+
 		if (component.selected) return;
 
 		component.selected = true;
 		component.parent.addClass('selected');
 
 		this.check(name);
-
-		if (this.link) this.link.set('value', this.toUrl());
 	},
 
 	deselect: function(name){
 		var component = components[name];
 
-		if (!component.selected) return;
+		if (!component || !component.selected) return;
 
 		component.selected = false;
 		component.parent.removeClass('selected');
 
 		this.uncheck(name);
-
-		if (this.link) this.link.set('value', this.toUrl());
 	},
 
 	require: function(name, req){
@@ -167,6 +165,8 @@ var Packager = this.Packager = {
 		pkg.components.each(function(name){
 			Packager.select(name);
 		});
+
+		this.setLocationHash();
 	},
 
 	deselectPackage: function(name){
@@ -176,6 +176,8 @@ var Packager = this.Packager = {
 		pkg.components.each(function(name){
 			Packager.deselect(name);
 		});
+
+		this.setLocationHash();
 	},
 
 	enablePackage: function(name){
@@ -191,7 +193,7 @@ var Packager = this.Packager = {
 			components[name].element.set('disabled', false);
 		});
 
-		if (this.link) this.link.set('value', this.toUrl());
+		this.setLocationHash();
 	},
 
 	disablePackage: function(name){
@@ -209,7 +211,7 @@ var Packager = this.Packager = {
 			components[name].element.set('disabled', true);
 		});
 
-		if (this.link) this.link.set('value', this.toUrl());
+		this.setLocationHash();
 	},
 
 	getSelected: function(){
@@ -218,20 +220,13 @@ var Packager = this.Packager = {
 		return selected;
 	},
 
-	setSelected: function(selected){
-		for (var name in components){
-			if (selected.contains(name)) this.select(name);
-			else this.deselect(name);
-		}
-	},
-
 	getDisabledPackages: function(){
 		var disabled = [];
 		for (var name in packages) if (!packages[name].enabled) disabled.push(name);
 		return disabled;
 	},
 
-	toUrl: function(){
+	toQueryString: function(){
 		var selected = this.getSelected(),
 			disabled = this.getDisabledPackages(),
 			query = [];
@@ -239,29 +234,45 @@ var Packager = this.Packager = {
 		if (selected.length) query.push('select=' + selected.join(';'));
 		if (disabled.length) query.push('disable=' + disabled.join(';'));
 
-		if (!query.length) return;
+		return query.join('&');
+	},
 
-		var loc = window.location;
+	toUrl: function(){
+		var loc = window.location,
+			queryString = this.toQueryString();
 
-		return loc.protocol + '//' + loc.hostname + loc.pathname + '?' + query.join('&');
+		return loc.protocol + '//' + loc.hostname + loc.pathname + (queryString ? '#' + queryString : '');
+	},
+
+	setLocationHash: function(){
+		window.location.hash = '#' + this.toQueryString();
 	},
 
 	fromUrl: function(){
 		var query = window.location.search || window.location.hash;
 		if (!query) return;
 
+		this.reset();
+
 		var parts = query.substr(1).split('&');
 		parts.each(function(part){
 			var split = part.split('=');
-			if (split[0] == 'select') Packager.setSelected(split[1].split(';'));
+
+			if (split[0] == 'select') split[1].split(';').each(function(name){
+				Packager.select(name);
+			});
+
 			if (split[0] == 'disable') split[1].split(';').each(function(name){
 				Packager.disablePackage(name);
 			});
 		});
+
+		this.setLocationHash();
 	},
 
 	reset: function(){
 		for (var name in components) this.deselect(name);
+		for (var name in packages) this.enablePackage(name);
 	}
 
 };
