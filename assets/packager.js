@@ -26,7 +26,7 @@ var Packager = this.Packager = {
 					name = element.get('value'),
 					parent = element.getParent('tr');
 
-				depends = depends ? depends.split(',') : [];
+				depends = depends ? depends.split(', ') : [];
 
 				pkg.components.push(name);
 				var component = components[name] = {
@@ -234,7 +234,7 @@ var Packager = this.Packager = {
 		if (selected.length) query.push('select=' + selected.join(';'));
 		if (disabled.length) query.push('disable=' + disabled.join(';'));
 
-		return query.join('&');
+		return query.join('&') || '!';
 	},
 
 	toUrl: function(){
