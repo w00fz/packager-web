@@ -14,6 +14,16 @@
 <body>
 
 	<form id="packager" action="<?php echo BASE_PATH; ?>/web/download" method="post">
+	
+	<p class="hash-loader">
+		<label>Load your hash <input type="text" /></label>
+	</p>
+	<p class="submit">
+		<input type="hidden" name="addheaders" value="" />
+		<input type="reset" value="reset" />
+		<input type="submit" value="download" />
+		<input type="submit" name="addheaders" value="download with package info" />
+	</p>
 
 	<?php foreach ($packages as $name => $data): ?>
 
