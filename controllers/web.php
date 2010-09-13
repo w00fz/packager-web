@@ -49,8 +49,8 @@ class Web extends Control {
 		$addheaders = $this->post('addheaders');
 		$disabled = $this->post('disabled');
 
-		$pkg = new Packager($packages);
-
+		$pkg = new Packager($packages, array('indexing' => true, 'database' => 'mootools-core.sql'));
+		
 		foreach ($disabled as $package){
 			if ($package) $pkg->remove_package($package);
 		}

@@ -8,6 +8,7 @@
 	<link href="<?php echo BASE_PATH; ?>/assets/packager.css" rel="stylesheet" type="text/css" media="screen" />
 
 	<script src="<?php echo BASE_PATH; ?>/libs/mootools.js" type="text/javascript"></script>
+	<script src="<?php echo BASE_PATH; ?>/assets/md5.js" type="text/javascript"></script>
 	<script src="<?php echo BASE_PATH; ?>/assets/packager.js" type="text/javascript"></script>
 </head>
 <body>
