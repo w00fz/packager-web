@@ -1,1 +1,6 @@
+*.swp
+*~
+packager-web.tmproj
+packager-web.esproj
+config.yml
 mootools-core.sql

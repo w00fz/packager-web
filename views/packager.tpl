@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8" />
-	<title>Packager Web</title>
+	<title><?php echo $config['title']; ?></title>
 
-	<link href="<?php echo BASE_PATH; ?>/libs/reset.css" rel="stylesheet" type="text/css" media="screen" />
-	<link href="<?php echo BASE_PATH; ?>/assets/packager.css" rel="stylesheet" type="text/css" media="screen" />
+	<link rel="stylesheet" type="text/css" media="screen" href="<?php echo BASE_PATH; ?>/libs/reset.css" />
+	<link rel="stylesheet" type="text/css" media="screen" href="<?php echo BASE_PATH; ?>/assets/<?php echo $config['theme']; ?>.css" />
 
 	<script src="<?php echo BASE_PATH; ?>/libs/mootools.js" type="text/javascript"></script>
 	<script src="<?php echo BASE_PATH; ?>/assets/md5.js" type="text/javascript"></script>
@@ -112,10 +112,15 @@
 	<?php endforeach; ?>
 
 		<p class="submit">
-			<input type="hidden" name="addheaders" value="" />
-			<input type="reset" value="reset" />
-			<input type="submit" value="download" />
-			<input type="submit" name="addheaders" value="download with package info" />
+			<?php foreach ($config['buttons'] as $button): ?>
+				<?php if ($button == 'reset'): ?>
+					<input type="reset" value="reset" />
+				<?php elseif ($button == 'download'): ?>
+					<input type="submit" value="download" />
+				<?php elseif ($button == 'compress'): ?>
+					<input type="submit" name="compress" value="download compressed" />
+				<?php endif; ?>
+			<?php endforeach; ?>
 		</p>
 
 	</form>
