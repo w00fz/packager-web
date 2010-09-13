@@ -45,7 +45,7 @@ class Web extends Control {
 	public function download($direct = false){
 		global $packages;
 		
-		if ($direct && preg_match("/^[a-f0-9]{32}$/", $direct)) return $this->direct_download($direct);
+		if ($direct) return $this->direct_download($direct);
 		
 		$files = $this->post('files');
 		$addheaders = $this->post('addheaders');
@@ -71,6 +71,8 @@ class Web extends Control {
 	
 	public function direct_download($hash){
 		global $packages;
+		
+		if (!preg_match("/^[a-f0-9]{32}$/", $hash)) return $this->index();
 		
 		$storage = new Storage('mootools-core.sql');
 		$files = $storage->load($hash);
