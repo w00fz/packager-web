@@ -4,6 +4,3 @@
 [submodule "libs/packager"]
 	path = libs/packager
 	url = git://github.com/kamicane/packager.git
-[submodule "libs/package"]
-	path = libs/package
-	url = git://github.com/kamicane/packager.git
