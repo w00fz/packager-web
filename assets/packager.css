@@ -58,7 +58,7 @@ table {
 	width: 100%;
 	border-collapse: separate;
 	cursor: default;
-	margin-bottom: 10px;
+	margin-bottom: 20px;
 }
 
 th {
@@ -195,16 +195,12 @@ td.provides {
 	color: #5283bf;
 }
 
-p.submit, p.hash-loader {
+p.submit {
 	text-align: center;
 }
 
 div.buttons {
 	float: right;
-}
-
-div.package {
-	margin-top: 20px;
 }
 
 div.package div.disabled {
@@ -219,7 +215,7 @@ div.package-disabled div.disabled {
 	display: block;
 }
 
-p.submit input, p.hash-loader, p.hash-loader input {
+p.submit input {
 	font: 14px/1.2 Helvetica;
 	font-weight: bold;
 	border: 1px solid #aaa;
@@ -229,24 +225,6 @@ p.submit input, p.hash-loader, p.hash-loader input {
 	background: #f9f9f9;
 	color: #444;
 	padding: 6px 20px;
-}
-
-p.hash-loader {
-	background: #f4f4f4;
-    border: 0 none;
-    border-radius: 8px;
-	-moz-border-radius: 8px;
-	-webkit-border-radius: 8px;
-    margin-bottom: 20px;
-}
-
-p.hash-loader input {
-	border-radius: 4px;
-	-moz-border-radius: 4px;
-	-webkit-border-radius: 4px;
-    padding: 5px 10px;
-	width: 275px;
-	text-align: center;
 }
 
 div.buttons input {
