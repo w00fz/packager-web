@@ -42,9 +42,11 @@ class Web extends Control {
 		$this->render('interface');
 	}
 
-	public function download(){
+	public function download($direct = false){
 		global $packages;
-
+		
+		if ($direct && strlen($direct) == 32) return $this->direct_download($direct);
+		
 		$files = $this->post('files');
 		$addheaders = $this->post('addheaders');
 		$disabled = $this->post('disabled');
@@ -64,6 +66,22 @@ class Web extends Control {
 		header('Content-Disposition: attachment; filename="' . $pkg->get_package_name() . '.js"');
 
 		if ($addheaders) echo $this->get_headers($pkg, $files);
+		echo $contents;
+	}
+	
+	public function direct_download($hash){
+		global $packages;
+		
+		$storage = new Storage('mootools-core.sql');
+		$files = $storage->load($hash);
+		
+		$pkg = new Packager($packages);
+		
+		$contents = $pkg->build_from_files($files);
+		
+		header("Content-Type: text/plain");
+		header('Content-Disposition: attachment; filename="' . $pkg->get_package_name() . '.js"');
+		
 		echo $contents;
 	}
 
