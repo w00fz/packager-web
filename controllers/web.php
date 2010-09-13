@@ -45,7 +45,7 @@ class Web extends Control {
 	public function download($direct = false){
 		global $packages;
 		
-		if ($direct && strlen($direct) == 32) return $this->direct_download($direct);
+		if ($direct && preg_match("/^[a-f0-9]{32}$/", $direct)) return $this->direct_download($direct);
 		
 		$files = $this->post('files');
 		$addheaders = $this->post('addheaders');
