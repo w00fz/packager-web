@@ -2,7 +2,7 @@
 
 class Web extends Control {
 
-	protected function index(){
+	protected function index($hash = false){
 		global $config;
 
 		$pkg = new Packager($config['packages']);
@@ -37,7 +37,8 @@ class Web extends Control {
 			}
 
 		}
-
+		
+		if ($hash) $this->data('hash', $hash);
 		$this->data('packages', $data);
 		$this->data('config', $config['view']);
 		$this->render($config['view']['theme']);
@@ -46,7 +47,7 @@ class Web extends Control {
 	public function download($direct = false){
 		global $config;
 		
-		if ($direct) return $this->direct_download($direct);
+		if ($direct) return $this->get($direct);
 
 		$post = $this->post();
 
@@ -78,22 +79,36 @@ class Web extends Control {
 		echo $contents;
 	}
 	
-	public function direct_download($hash){
-		global $packages;
+	public function get($hash){
+		global $config;
 		
 		if (!preg_match("/^[a-f0-9]{32}$/", $hash)) return $this->index();
 		
 		$storage = new Storage('mootools-core.sql');
 		$files = $storage->load($hash);
 		
-		$pkg = new Packager($packages);
+		if (!$files) return $this->index();
+		
+		$pkg = new Packager($config['packages']);
 		
 		$contents = $pkg->build_from_files($files);
 		
-		header("Content-Type: text/plain");
-		header('Content-Disposition: attachment; filename="' . $pkg->get_package_name() . '.js"');
+		header('Content-Type: ' . $config['packager']['contenttype']);
+		header('Content-Disposition: attachment; filename="' . $config['packager']['exports'] . '"');
 		
 		echo $contents;
+	}
+	
+	public function load($hash){
+		global $config;
+		
+		if (!preg_match("/^[a-f0-9]{32}$/", $hash)) return $this->index();
+		
+		$storage = new Storage('mootools-core.sql');
+		$files = $storage->load($hash);
+		
+		if (!$files) return $this->index();
+		else return $this->index($hash);
 	}
 
 	protected function get_packager_command($files, $useonly){

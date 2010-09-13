@@ -16,7 +16,7 @@
 	<form id="packager" action="<?php echo BASE_PATH; ?>/web/download" method="post">
 	
 	<p class="hash-loader">
-		<label>Load your hash <input type="text" /></label>
+		<label>Load your hash <input type="text" value="<?php echo (isset($hash) ? $hash : ''); ?>"/></label>
 	</p>
 	<p class="submit">
 		<input type="hidden" name="addheaders" value="" />

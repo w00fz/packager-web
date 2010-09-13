@@ -48,7 +48,7 @@ Class Storage {
 	
 	public function load($hash){
 		$components = $this->db->querySingle("SELECT packages FROM hashes WHERE md5='".$hash."'");
-		return explode(';', $components);
+		return (!$components) ? $components : explode(';', $components);
 	}
 }
 
