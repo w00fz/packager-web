@@ -37,8 +37,8 @@ class Web extends Control {
 			}
 
 		}
-		
-		if ($hash) $this->data('hash', $hash);
+
+		if (preg_match("/^[a-f0-9]{32}$/", $hash)) $this->data('hash', $hash);
 		$this->data('packages', $data);
 		$this->data('config', $config['view']);
 		$this->render($config['view']['theme']);
@@ -46,7 +46,7 @@ class Web extends Control {
 
 	public function download($direct = false){
 		global $config;
-		
+
 		if ($direct) return $this->get($direct);
 
 		$post = $this->post();
@@ -56,6 +56,8 @@ class Web extends Control {
 		$compress = isset($post['compress']) ? true : false;
 
 		$pkg = new Packager($config['packages']);
+		
+		if (!count($files)) return $this->index();
 
 		$storage = new Storage('mootools-core.sql');
 		$storage->save($files);
@@ -109,6 +111,10 @@ class Web extends Control {
 		
 		if (!$files) return $this->index();
 		else return $this->index($hash);
+	}
+	
+	public function routing($action, $hash = false){
+		return $this->$action($hash);
 	}
 
 	protected function get_packager_command($files, $useonly){

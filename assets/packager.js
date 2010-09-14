@@ -251,7 +251,7 @@ var Packager = this.Packager = {
 	setLocationHash: function(){
 		//window.location.hash = '#' + this.toQueryString();
 		var selected = this.getSelected();
-		window.location.hash = (selected.length) ? MD5(selected.join(';')) : '';
+		//window.location.hash = (selected.length) ? MD5(selected.join(';')) : '';
 	},
 
 	fromUrl: function(){
