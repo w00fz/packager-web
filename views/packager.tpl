@@ -13,7 +13,7 @@
 </head>
 <body>
 
-	<form id="packager" action="<?php echo BASE_PATH; ?>/web/download" method="post">
+	<form id="packager" action="<?php echo BASE_PATH; ?>/download" method="post">
 	
 	<p class="hash-loader">
 		<label>Load your hash <input type="text" value="<?php echo (isset($hash) ? $hash : ''); ?>"/></label>
