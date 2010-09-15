@@ -278,13 +278,15 @@ Packager.Remote = {
 	init: function(){		
 		this.request = this.request || new Request({onSuccess: Packager.fromUrl.bind(Packager)});
 		
-		if (Packager.hashload.get('value').length) this.load();
+		Packager.hashload.addEvent('keydown', this.attachEvent);
+		
+		if (Packager.hashload.value.length) this.load();
 		
 		return this.request;
 	},
 	
 	load: function(){
-		var hash = Packager.hashload.get('value') || '';
+		var hash = Packager.hashload.value || '';
 		this.request.send({'url': this.getUrl(hash)});
 	},
 	
@@ -297,6 +299,13 @@ Packager.Remote = {
 			lastindex = action.lastIndexOf('/') + 1;
 			
 		return action.substr(0, lastindex);
+	},
+	
+	attachEvent: function(e){
+		if (e.key == 'enter') {
+			Packager.Remote.load();
+			e.stop();
+		}
 	}
 };
 
