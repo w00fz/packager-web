@@ -113,6 +113,16 @@ class Web extends Control {
 		else return $this->index($hash);
 	}
 	
+	public function ajax($hash = false){
+		if (!preg_match("/^[a-f0-9]{32}$/", $hash)) return $this->index();
+		
+		$storage = new Storage('mootools-core.sql');
+		$files = $storage->load($hash);
+		
+		if (!$files) echo "hash not found";
+		else echo implode(";", $files);
+	}
+	
 	public function routing($action, $hash = false){
 		return $this->$action($hash);
 	}

@@ -6,9 +6,9 @@ var packages = {},
 var Packager = this.Packager = {
 
 	init: function(form){
-		form = document.id(form || 'packager');
+		Packager.form = this.form = document.id(form || 'packager');
 
-		form.getElements('.package').each(function(element){
+		this.form.getElements('.package').each(function(element){
 			var name = element.get('id').substr(8);
 
 			var pkg = packages[name] = {
@@ -67,7 +67,7 @@ var Packager = this.Packager = {
 
 		});
 
-		form.addEvents({
+		this.form.addEvents({
 			submit: function(event){
 				if (!Packager.getSelected().length) event.stop();
 			},
@@ -76,8 +76,11 @@ var Packager = this.Packager = {
 				Packager.reset();
 			}
 		});
-
-		Packager.fromUrl();
+				
+		
+		Packager.hashload = this.form.getElement('.hash-loader input[type=text]');
+		
+		Packager.Remote.init();
 	},
 
 	check: function(name){
@@ -229,6 +232,11 @@ var Packager = this.Packager = {
 		for (var name in packages) if (!packages[name].enabled) disabled.push(name);
 		return disabled;
 	},
+	
+	getUrl: function(){
+		loc = window.location;
+		return loc.protocol + '//' + loc.hostname + loc.pathname;
+	},
 
 	toQueryString: function(){
 		var selected = this.getSelected(),
@@ -241,35 +249,18 @@ var Packager = this.Packager = {
 		return query.join('&') || '!';
 	},
 
-	toUrl: function(){
-		var loc = window.location,
-			queryString = this.toQueryString();
-
-		return loc.protocol + '//' + loc.hostname + loc.pathname + (queryString ? '#' + queryString : '');
-	},
-
 	setLocationHash: function(){
-		//window.location.hash = '#' + this.toQueryString();
 		var selected = this.getSelected();
-		//window.location.hash = (selected.length) ? MD5(selected.join(';')) : '';
+		this.hashload.set('value', (selected.length) ? MD5(selected.join(';')) : '');
 	},
 
-	fromUrl: function(){
-		var query = window.location.search || window.location.hash;
+	fromUrl: function(query){
 		this.reset();
-		if (!query) return;
-
-		var parts = query.substr(1).split('&');
-		parts.each(function(part){
-			var split = part.split('=');
-
-			if (split[0] == 'select') split[1].split(';').each(function(name){
-				Packager.select(name);
-			});
-
-			if (split[0] == 'disable') split[1].split(';').each(function(name){
-				Packager.disablePackage(name);
-			});
+		if (!query || query == 'hash not found') return;
+		
+		var parts = query.split(';');
+		parts.each(function(name){
+			Packager.select(name);
 		});
 
 		this.setLocationHash();
@@ -281,6 +272,32 @@ var Packager = this.Packager = {
 		this.setLocationHash();
 	}
 
+};
+
+Packager.Remote = {
+	init: function(){		
+		this.request = this.request || new Request({onSuccess: Packager.fromUrl.bind(Packager)});
+		
+		if (Packager.hashload.get('value').length) this.load();
+		
+		return this.request;
+	},
+	
+	load: function(){
+		var hash = Packager.hashload.get('value') || '';
+		this.request.send({'url': this.getUrl(hash)});
+	},
+	
+	getUrl: function(hash){
+		return this.action() + 'ajax/' + (hash || '');
+	},
+	
+	action: function(){
+		var action = Packager.form.get('action'),
+			lastindex = action.lastIndexOf('/') + 1;
+			
+		return action.substr(0, lastindex);
+	}
 };
 
 document.addEvent('domready', Packager.init);

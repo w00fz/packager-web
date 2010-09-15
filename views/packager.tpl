@@ -18,6 +18,7 @@
 	<p class="hash-loader">
 		<label>Load your hash <input type="text" value="<?php echo (isset($hash) ? $hash : ''); ?>"/></label>
 	</p>
+	
 	<p class="submit">
 		<input type="hidden" name="addheaders" value="" />
 		<input type="reset" value="reset" />
