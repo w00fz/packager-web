@@ -7,7 +7,7 @@ description: Javascript for packager-web's frontend.
 
 license: MIT-style license.
 
-requires: [Core/Array, Core/Element.Style, Core/Element.Event, Core/DomReady]
+requires: [Core/Array, Core/Element.Style, Core/Element.Event, Core/DomReady, Core/Request]
 
 provides: Packager
 
