@@ -19,11 +19,25 @@
 		<label>Load your hash <input type="text" value="<?php echo (isset($hash) ? $hash : ''); ?>"/></label>
 	</p>
 	
+	<div style="position: absolute;background: rgba(0, 0, 0, 0.7); top: 5px; left: 5px; border-radius: 12px; -webkit-border-radius:12px; -moz-border-radius:12px;padding:10px;color:#fff; line-height: 20px;">
+		Temp Hash Examples:<br />
+		1b06dc0cf0267f7ad56376f176862be8<br />
+		264a8779ca5948ea528b3fbd075ac9c3<br />
+		653562957b1fc1cd3a994ffa5f31c888<br />
+		b9c6ed3058a47291c2f60256bf22cfe9<br />
+		07671d14df83fdfc74e6a993ee1589f9 // J!<br />
+	</div>
+	
 	<p class="submit">
-		<input type="hidden" name="addheaders" value="" />
-		<input type="reset" value="reset" />
-		<input type="submit" value="download" />
-		<input type="submit" name="addheaders" value="download with package info" />
+		<?php foreach ($config['buttons'] as $button): ?>
+			<?php if ($button == 'reset'): ?>
+				<input type="reset" value="reset" />
+			<?php elseif ($button == 'download'): ?>
+				<input type="submit" value="download" />
+			<?php elseif ($button == 'compress'): ?>
+				<input type="submit" name="compress" value="download compressed" />
+			<?php endif; ?>
+		<?php endforeach; ?>
 	</p>
 
 	<?php foreach ($packages as $name => $data): ?>
