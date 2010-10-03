@@ -1,13 +1,15 @@
 view:
   title: Packager Web
   theme: packager
-  buttons: [reset, download, compress]
 
 packager:
   exports: packaged.js
   contenttype: application/javascript
   charset: UTF-8
-  compressor: java -jar /usr/share/yui-compressor/yui-compressor.jar --type js -o {FILE} {FILE}
+  blocks:
+    1.2compat: Include MooTools 1.2 compatibility mode.
+  compressors:
+    yui: java -jar /usr/share/yui-compressor/yui-compressor.jar --type js {FILE}
 
 packages:
   - "/Users/kamicane/Sites/mootools-core-1.3/"

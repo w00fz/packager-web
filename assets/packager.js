@@ -82,6 +82,38 @@ var Packager = this.Packager = {
 
 		});
 
+		var options = document.id('options');
+		if (options){
+			options.getElements('input[type=checkbox]').each(function(element){
+				element.setStyle('display', 'none');
+
+				element.getParent('tr').addListener('click', function(){
+					var checked = !element.get('checked');
+
+					element.set('checked', checked);
+					if (checked) this.addClass('checked').addClass('selected').removeClass('unchecked');
+					else this.addClass('unchecked').removeClass('checked').removeClass('selected');
+				});
+			});
+
+			options.getElements('input[type=radio]').each(function(element, index, radios){
+				element.setStyle('display', 'none');
+
+				var name = element.get('name'),
+					affected = radios.filter(function(radio){
+						return (radio !== element && radio.get('name') == name);
+					}).getParent('tr');
+
+				element.getParent('tr').addListener('click', function(){
+					if (element.get('checked')) return;
+
+					element.set('checked', true);
+					this.addClass('checked').addClass('selected').removeClass('unchecked');
+					affected.addClass('unchecked').removeClass('checked').removeClass('selected');
+				});
+			});
+		}
+
 		form.addEvents({
 			submit: function(event){
 				if (!Packager.getSelected().length) event.stop();
