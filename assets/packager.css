@@ -269,6 +269,12 @@ p.submit input:hover, div.buttons input:hover {
 	cursor: pointer;
 }
 
+div.buttons input.disabled {
+	border-color: #ccc;
+	background: #f0f0f0;
+	color: #aaa;
+}
+
 div.link {
 	text-align: center;
 }

@@ -66,24 +66,38 @@ class Web extends Control {
 		}
 
 		$contents = $pkg->build($files, array(), array(), $exclude_blocks);
-
 		$useonly = count($disabled) ? $pkg->get_packages() : null;
+		$headers = '';
 
-		if ($compressor) $contents = $this->compress($compressor, $contents);
+		if ($compressor){
+			$contents = $this->compress($compressor, $contents);
+			$headers = $this->get_headers($pkg, $files);
+		}
+
+		$packager_cmd = $this->get_packager_command($pkg, $files, $useonly, $exclude_blocks);
 
 		header('Content-Type: ' . $config['packager']['contenttype'] . '; charset=' . $config['packager']['charset']);
 		header('Content-Disposition: attachment; filename="' . $config['packager']['exports'] . '"');
 
-		echo $this->get_packager_command($files, $useonly, $exclude_blocks);
-		if ($compressor) echo $this->get_headers($pkg, $files);
-		echo $contents;
+		echo $packager_cmd . $headers . $contents;
 	}
 
-	protected function get_packager_command($files, $useonly, $blocks){
+	protected function get_packager_command($pkg, $files, $useonly, $blocks){
 		$cmd = '// packager build';
 
+		$packages = array();
 		foreach ($files as $file){
-			$cmd .= " {$file}";
+			$package = explode('/', $file, 2);
+			$package = $package[0];
+
+			if (!isset($packages[$package])) $packages[$package] = array();
+
+			$packages[$package][] = $file;
+		}
+
+		foreach ($packages as $name => $files){
+			if (count($files) == count($pkg->get_all_files($name))) $cmd .= " {$name}/*";
+			else foreach ($files as $file) $cmd .= " {$file}";
 		}
 
 		if ($useonly){

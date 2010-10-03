@@ -24,13 +24,15 @@ var Packager = this.Packager = {
 		form = document.id(form || 'packager');
 
 		form.getElements('.package').each(function(element){
+
 			var name = element.get('id').substr(8);
 
 			var pkg = packages[name] = {
 				enabled: true,
 				element: element,
 				toggle: element.getElement('.toggle'),
-				components: []
+				components: [],
+				selected: 0
 			};
 
 			element.getElements('input[type=checkbox]').each(function(element){
@@ -60,14 +62,14 @@ var Packager = this.Packager = {
 				});
 			});
 
-			var select = element.getElement('.select');
+			var select = pkg.select = element.getElement('.select');
 			if (select) select.addListener('click', function(){
-				Packager.selectPackage(name);
+				if (!this.hasClass('disabled')) Packager.selectPackage(name);
 			});
 
-			var deselect = element.getElement('.deselect');
+			var deselect = pkg.deselect = element.getElement('.deselect');
 			if (deselect) deselect.addListener('click', function(){
-				Packager.deselectPackage(name);
+				if (!this.hasClass('disabled')) Packager.deselectPackage(name);
 			});
 
 			var disable = element.getElement('.disable');
@@ -84,6 +86,7 @@ var Packager = this.Packager = {
 
 		var options = document.id('options');
 		if (options){
+
 			options.getElements('input[type=checkbox]').each(function(element){
 				element.setStyle('display', 'none');
 
@@ -112,6 +115,7 @@ var Packager = this.Packager = {
 					affected.addClass('unchecked').removeClass('checked').removeClass('selected');
 				});
 			});
+
 		}
 
 		form.addEvents({
@@ -131,9 +135,9 @@ var Packager = this.Packager = {
 		var component = components[name],
 			element = component.element;
 
+		if (component.selected) element.set('checked', true);
 		if (!component.selected && !component.required.length) return;
 
-		if (component.selected) element.set('checked', true);
 		component.parent.addClass('checked').removeClass('unchecked');
 
 		component.depends.each(function(dependancy){
@@ -145,9 +149,9 @@ var Packager = this.Packager = {
 		var component = components[name],
 			element = component.element;
 
+		if (!component.selected) element.set('checked', false);
 		if (component.selected || component.required.length) return;
 
-		element.set('checked', false);
 		component.parent.addClass('unchecked').removeClass('checked');
 
 		component.depends.each(function(dependancy){
@@ -156,7 +160,8 @@ var Packager = this.Packager = {
 	},
 
 	select: function(name){
-		var component = components[name];
+		var component = components[name],
+			pkg = packages[name.split('/')[0]];
 
 		if (!component){
 			var matches = name.match(/(.+)\/\*$/);
@@ -169,16 +174,27 @@ var Packager = this.Packager = {
 		component.selected = true;
 		component.parent.addClass('selected');
 
+		++pkg.selected;
+
+		if (pkg.select && pkg.selected == pkg.components.length) pkg.select.addClass('disabled');
+		if (pkg.deselect && pkg.selected == 1) pkg.deselect.removeClass('disabled');
+
 		this.check(name);
 	},
 
 	deselect: function(name){
-		var component = components[name];
+		var component = components[name],
+			pkg = packages[name.split('/')[0]];
 
 		if (!component || !component.selected) return;
 
 		component.selected = false;
 		component.parent.removeClass('selected');
+
+		--pkg.selected;
+
+		if (pkg.deselect && !pkg.selected) pkg.deselect.addClass('disabled');
+		if (pkg.select && pkg.selected == pkg.components.length - 1) pkg.select.removeClass('disabled');
 
 		this.uncheck(name);
 	},
@@ -266,8 +282,17 @@ var Packager = this.Packager = {
 	},
 
 	getSelected: function(){
-		var selected = [];
-		for (var name in components) if (components[name].selected) selected.push(name);
+		var name, selected = [];
+
+		for (name in packages){
+			var pkg = packages[name];
+
+			if (pkg.selected == pkg.components.length) selected.push(name + '/*');
+			else pkg.components.each(function(name){
+				if (components[name].selected) selected.push(name);
+			});
+		}
+
 		return selected;
 	},
 
@@ -306,15 +331,19 @@ var Packager = this.Packager = {
 
 		var parts = query.substr(1).split('&');
 		parts.each(function(part){
-			var split = part.split('=');
+			var split = part.split('='),
+				name = split[0],
+				value = split[1];
 
-			if (split[0] == 'select') split[1].split(';').each(function(name){
-				Packager.select(name);
-			});
-
-			if (split[0] == 'disable') split[1].split(';').each(function(name){
-				Packager.disablePackage(name);
-			});
+			if (name == 'select'){
+				value.split(';').each(function(name){
+					Packager.select(name);
+				});
+			} else if (name == 'disable'){
+				value.split(';').each(function(name){
+					Packager.disablePackage(name);
+				});
+			}
 		});
 
 		this.setLocationHash();

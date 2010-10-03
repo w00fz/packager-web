@@ -9,7 +9,7 @@ packager:
   blocks:
     1.2compat: Include MooTools 1.2 compatibility mode.
   compressors:
-    yui: java -jar /usr/share/yui-compressor/yui-compressor.jar --type js {FILE}
+    YUI: java -jar /usr/share/yui-compressor/yui-compressor.jar --type js {FILE}
 
 packages:
   - "/Users/kamicane/Sites/mootools-core-1.3/"

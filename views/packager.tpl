@@ -9,9 +9,9 @@
 
 	<script type="text/javascript" src="<?php echo BASE_PATH; ?>/libs/mootools.js"></script>
 	<script type="text/javascript" src="<?php echo BASE_PATH; ?>/assets/packager.js"></script>
-	
+
 	<script type="text/javascript">document.addEvent('domready', Packager.init);</script>
-	
+
 </head>
 <body>
 
@@ -31,7 +31,7 @@
 								<input type="hidden" name="disabled[]" class="toggle" value="" />
 								<div class="enabled">
 									<input type="button" class="select" value="select package" />
-									<input type="button" class="deselect" value="deselect package" />
+									<input type="button" class="deselect disabled" value="deselect package" />
 									<input type="button" class="disable" value="disable package" />
 								</div>
 								<div class="disabled">
@@ -85,7 +85,7 @@
 
 			?>
 
-				<tr class="<?php echo ($i == $c) ? 'last ' : 'middle '?>unchecked">
+				<tr class="<?php echo ($i == $c) ? 'last' : 'middle'?> unchecked">
 					<td class="first check">
 						<div class="checkbox"></div>
 						<input type="checkbox" name="files[]" value="<?php echo $name; ?>" data-depends="<?php echo $file['depends']; ?>" />
@@ -127,10 +127,10 @@
 
 			<?php
 
-				endforeach;
-				endif;
+			endforeach;
+			endif;
 
-				if (!empty($config['compressors'])):
+			if (!empty($config['compressors'])):
 
 			?>
 
@@ -156,12 +156,12 @@
 						<div class="radio"></div>
 						<input type="radio" name="compressor" value="<?php echo $compressor; ?>"<?php if ($i == 1) echo ' checked="checked"'; ?> />
 					</td>
-					<td class="middle"><?php echo ucwords($compressor); ?> Compression</td>
+					<td class="middle"><?php echo $compressor; ?> Compression</td>
 					<td class="last">
 
 					<?php
 
-						switch ($compressor){
+						switch (strtolower($compressor)){
 
 							case 'yui':
 								echo 'Uses <a href="http://www.julienlecomte.net/yuicompressor/">YUI Compressor</a>
