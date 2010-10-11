@@ -114,9 +114,19 @@
 					</th>
 				</tr>
 
-			<?php foreach($config['blocks'] as $block => $description): ?>
+			<?php
 
-				<tr class="middle checked selected">
+			$blocks = $config['blocks'];
+
+			$i = 0;
+			$c = count($blocks);
+
+			foreach($config['blocks'] as $block => $description):
+				$i++;
+
+			?>
+
+				<tr class="<?php echo ($i == $c && empty($config['compressors'])) ? 'last' : 'middle'; ?> checked selected">
 					<td class="first check">
 						<div class="checkbox"></div>
 						<input type="checkbox" name="blocks[]" value="<?php echo $block; ?>" checked="checked" />
@@ -140,21 +150,12 @@
 					</th>
 				</tr>
 
-			<?php
+			<?php foreach($config['compressors'] as $compressor): ?>
 
-			$compressors = $config['compressors'];
-
-			$i = 0;
-
-			foreach($compressors as $compressor):
-				$i++
-
-			?>
-
-				<tr class="middle <?php echo ($i == 1) ? 'checked selected' : 'unchecked'; ?>">
+				<tr class="middle unchecked">
 					<td class="first check">
 						<div class="radio"></div>
-						<input type="radio" name="compressor" value="<?php echo $compressor; ?>"<?php if ($i == 1) echo ' checked="checked"'; ?> />
+						<input type="radio" name="compressor" value="<?php echo $compressor; ?>" />
 					</td>
 					<td class="middle"><?php echo $compressor; ?> Compression</td>
 					<td class="last">
@@ -184,10 +185,10 @@
 
 			<?php endforeach; ?>
 
-				<tr class="last <?php echo (count($compressors)) ? 'unchecked' : 'checked selected'; ?>">
+				<tr class="last checked selected">
 					<td class="first check">
 						<div class="radio"></div>
-						<input type="radio" name="compressor" value=""<?php if (!count($compressors)) echo ' checked="checked"'; ?> />
+						<input type="radio" name="compressor" value="" checked="checked" />
 					</td>
 					<td class="middle">No Compression</td>
 					<td class="last">Uncompressed source. Recommended in testing phase.</td>
