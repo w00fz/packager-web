@@ -16,7 +16,7 @@ provides: Packager
 
 (function(){
 
-var packages = {}, components = {};
+var packages = {}, components = {}, storage = {};
 
 var Packager = this.Packager = {
 
@@ -87,32 +87,39 @@ var Packager = this.Packager = {
 		var options = document.id('options');
 		if (options){
 
-			options.getElements('input[type=checkbox]').each(function(element){
+			var blocks = options.getElements('[name=blocks\\[\\]]');
+			if (blocks.length) storage.blocks = blocks;
+
+			blocks.each(function(element){
 				element.setStyle('display', 'none');
 
-				element.getParent('tr').addListener('click', function(){
+				element.getParent('tr').addEvent('click', function(){
 					var checked = !element.get('checked');
 
 					element.set('checked', checked);
 					if (checked) this.addClass('checked').addClass('selected').removeClass('unchecked');
 					else this.addClass('unchecked').removeClass('checked').removeClass('selected');
+
+					Packager.setLocationHash();
 				});
 			});
 
-			options.getElements('input[type=radio]').each(function(element, index, radios){
+			var compressors = options.getElements('[name=compressor]');
+			if (compressors.length) storage.compressors = compressors;
+
+			compressors.each(function(element, index, radios){
 				element.setStyle('display', 'none');
 
-				var name = element.get('name'),
-					affected = radios.filter(function(radio){
-						return (radio !== element && radio.get('name') == name);
-					}).getParent('tr');
-
-				element.getParent('tr').addListener('click', function(){
+				element.getParent('tr').addEvent('click', function(){
 					if (element.get('checked')) return;
 
 					element.set('checked', true);
-					this.addClass('checked').addClass('selected').removeClass('unchecked');
-					affected.addClass('unchecked').removeClass('checked').removeClass('selected');
+					compressors.each(function(compressor){
+						if (compressor === element) compressor.getParent('tr').addClass('checked').addClass('selected').removeClass('unchecked');
+						else compressor.getParent('tr').addClass('unchecked').removeClass('checked').removeClass('selected');
+					});
+
+					Packager.setLocationHash();
 				});
 			});
 
@@ -302,13 +309,37 @@ var Packager = this.Packager = {
 		return disabled;
 	},
 
+	getExcludedBlocks: function(){
+		if (!storage.blocks) return [];
+
+		var excluded = [];
+
+		storage.blocks.each(function(element){
+			if (!element.get('checked')) excluded.push(element.get('value'));
+		});
+
+		return excluded;
+	},
+
+	getCompression: function(){
+		if (!storage.compressors) return null;
+
+		var element = storage.compressors.filter(':checked')[0];
+
+		return ((element) ? element.get('value') : null);
+	},
+
 	toQueryString: function(){
 		var selected = this.getSelected(),
 			disabled = this.getDisabledPackages(),
+			excluded = this.getExcludedBlocks(),
+			compression = this.getCompression(),
 			query = [];
 
 		if (selected.length) query.push('select=' + selected.join(';'));
 		if (disabled.length) query.push('disable=' + disabled.join(';'));
+		if (excluded.length) query.push('exclude=' + excluded.join(';'));
+		if (compression) query.push('compression=' + compression);
 
 		return query.join('&') || '!';
 	},
@@ -343,6 +374,18 @@ var Packager = this.Packager = {
 				value.split(';').each(function(name){
 					Packager.disablePackage(name);
 				});
+			} else if (name == 'exclude'){
+				if (!storage.blocks) return;
+				var exclude = value.split(';');
+
+				storage.blocks.each(function(element){
+					if (exclude.contains(element.get('value'))) element.getParent('tr').fireEvent('click');
+				});
+			} else if (name == 'compression'){
+				if (!storage.compressors) return;
+				var compressor = storage.compressors.filter('[value=' + value + ']')[0];
+
+				if (compressor) compressor.getParent('tr').fireEvent('click');
 			}
 		});
 
