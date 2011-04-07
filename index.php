@@ -12,6 +12,8 @@ if (empty($packages)) $packages = array();
 
 $config = YAML::decode_file('config.yml');
 if (empty($config['view']['theme'])) $config['view']['theme'] = 'packager';
+if (empty($config['packager']['blocks'])) $config['packager']['blocks'] = array();
+if (empty($config['packager']['compressors'])) $config['packager']['compressors'] = array();
 
 Control::config('default_controller', 'web');
 

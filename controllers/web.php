@@ -38,6 +38,9 @@ class Web extends Control {
 
 		}
 
+		$config['view']['blocks'] = $config['packager']['blocks'];
+		$config['view']['compressors'] = array_keys($config['packager']['compressors']);
+
 		$this->data('packages', $data);
 		$this->data('config', $config['view']);
 		$this->render($config['view']['theme']);
@@ -49,41 +52,65 @@ class Web extends Control {
 		$post = $this->post();
 
 		$files = isset($post['files']) ? $post['files'] : array();
-		$disabled = isset($post['disabled']) ? $post['disabled'] : array();;
-		$compress = isset($post['compress']) ? true : false;
+		$disabled = isset($post['disabled']) ? $post['disabled'] : array();
+		$include_blocks = isset($post['blocks']) ? $post['blocks'] : array();
+		$compressor = isset($post['compressor']) ? $post['compressor'] : null;
 
 		$pkg = new Packager($config['packages']);
+
+		$exclude_blocks = array_diff(array_keys($config['packager']['blocks']), $include_blocks);
 
 		foreach ($disabled as $key => $package){
 			if ($package) $pkg->remove_package($package);
 			else unset($disabled[$key]);
 		}
 
-		$contents = $pkg->build_from_files($files);
-
+		$contents = $pkg->build($files, array(), array(), $exclude_blocks);
 		$useonly = count($disabled) ? $pkg->get_packages() : null;
+		$headers = '';
 
-		if ($compress) $contents = $this->compress($contents);
+		if ($compressor){
+			$contents = $this->compress($compressor, $contents);
+			$headers = $this->get_headers($pkg, $files);
+		}
 
-		header('Content-Type: ' . $config['packager']['contenttype']);
+		$packager_cmd = $this->get_packager_command($pkg, $files, $useonly, $exclude_blocks);
+
+		header('Content-Type: ' . $config['packager']['contenttype'] . '; charset=' . $config['packager']['charset']);
 		header('Content-Disposition: attachment; filename="' . $config['packager']['exports'] . '"');
 
-		echo $this->get_packager_command($files, $useonly);
-		if ($compress) echo $this->get_headers($pkg, $files);
-		echo $contents;
+		echo $packager_cmd . $headers . $contents;
 	}
 
-	protected function get_packager_command($files, $useonly){
+	protected function get_packager_command($pkg, $files, $useonly, $blocks){
 		$cmd = '// packager build';
 
+		$packages = array();
 		foreach ($files as $file){
-			$cmd .= " {$file}";
+			$package = explode('/', $file, 2);
+			$package = $package[0];
+
+			if (!isset($packages[$package])) $packages[$package] = array();
+
+			$packages[$package][] = $file;
+		}
+
+		foreach ($packages as $name => $files){
+			if (count($files) == count($pkg->get_all_files($name))) $cmd .= " {$name}/*";
+			else foreach ($files as $file) $cmd .= " {$file}";
 		}
 
 		if ($useonly){
 			$cmd .= " +use-only";
 			foreach ($useonly as $name){
 				$cmd .= " {$name}";
+			}
+		}
+
+		if ($blocks){
+			$cmd .= " -blocks";
+			foreach ($blocks as $block){
+				$cmd .= " {$block}";
 			}
 		}
 
@@ -118,12 +145,12 @@ class Web extends Control {
 		return $head;
 	}
 
-	protected function compress($contents){
+	protected function compress($compressor, $contents){
 		global $config;
 		$pkgconfig = $config['packager'];
 
-		if (empty($pkgconfig['compressor'])){
-			error_log('packager-web: compressor not set');
+		if (empty($pkgconfig['compressors']) || empty($pkgconfig['compressors'][$compressor])){
+			error_log("packager-web: compressor {$compressor} not found");
 			return $contents;
 		}
 
@@ -135,10 +162,11 @@ class Web extends Control {
 
 		file_put_contents($tempfile, $contents);
 
-		$cmd = str_replace('{FILE}', $tempfile, $pkgconfig['compressor']);
-		exec($cmd);
+		$cmd = str_replace('{FILE}', $tempfile, $pkgconfig['compressors'][$compressor]);
 
-		$contents = file_get_contents($tempfile);
+		$contents = shell_exec($cmd);
+		if (!$contents) $contents = file_get_contents($tempfile);
+
 		unlink($tempfile);
 
 		return $contents;

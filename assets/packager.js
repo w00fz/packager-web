@@ -1,7 +1,22 @@
+/*
+---
+
+name: Packager
+
+description: Javascript for packager-web's frontend.
+
+license: MIT-style license.
+
+requires: [Core/Array, Core/Element.Style, Core/Element.Event, Core/DomReady]
+
+provides: Packager
+
+...
+*/
+
 (function(){
 
-var packages = {},
-	components = {};
+var packages = {}, components = {}, storage = {};
 
 var Packager = this.Packager = {
 
@@ -9,13 +24,15 @@ var Packager = this.Packager = {
 		form = document.id(form || 'packager');
 
 		form.getElements('.package').each(function(element){
+
 			var name = element.get('id').substr(8);
 
 			var pkg = packages[name] = {
 				enabled: true,
 				element: element,
 				toggle: element.getElement('.toggle'),
-				components: []
+				components: [],
+				selected: 0
 			};
 
 			element.getElements('input[type=checkbox]').each(function(element){
@@ -45,14 +62,14 @@ var Packager = this.Packager = {
 				});
 			});
 
-			var select = element.getElement('.select');
+			var select = pkg.select = element.getElement('.select');
 			if (select) select.addListener('click', function(){
-				Packager.selectPackage(name);
+				if (!this.hasClass('disabled')) Packager.selectPackage(name);
 			});
 
-			var deselect = element.getElement('.deselect');
+			var deselect = pkg.deselect = element.getElement('.deselect');
 			if (deselect) deselect.addListener('click', function(){
-				Packager.deselectPackage(name);
+				if (!this.hasClass('disabled')) Packager.deselectPackage(name);
 			});
 
 			var disable = element.getElement('.disable');
@@ -66,6 +83,47 @@ var Packager = this.Packager = {
 			});
 
 		});
+
+		var options = document.id('options');
+		if (options){
+
+			var blocks = options.getElements('[name=blocks\\[\\]]');
+			if (blocks.length) storage.blocks = blocks;
+
+			blocks.each(function(element){
+				element.setStyle('display', 'none');
+
+				element.getParent('tr').addEvent('click', function(){
+					var checked = !element.get('checked');
+
+					element.set('checked', checked);
+					if (checked) this.addClass('checked').addClass('selected').removeClass('unchecked');
+					else this.addClass('unchecked').removeClass('checked').removeClass('selected');
+
+					Packager.setLocationHash();
+				});
+			});
+
+			var compressors = options.getElements('[name=compressor]');
+			if (compressors.length) storage.compressors = compressors;
+
+			compressors.each(function(element, index, radios){
+				element.setStyle('display', 'none');
+
+				element.getParent('tr').addEvent('click', function(){
+					if (element.get('checked')) return;
+
+					element.set('checked', true);
+					compressors.each(function(compressor){
+						if (compressor === element) compressor.getParent('tr').addClass('checked').addClass('selected').removeClass('unchecked');
+						else compressor.getParent('tr').addClass('unchecked').removeClass('checked').removeClass('selected');
+					});
+
+					Packager.setLocationHash();
+				});
+			});
+
+		}
 
 		form.addEvents({
 			submit: function(event){
@@ -84,9 +142,9 @@ var Packager = this.Packager = {
 		var component = components[name],
 			element = component.element;
 
+		if (component.selected) element.set('checked', true);
 		if (!component.selected && !component.required.length) return;
 
-		if (component.selected) element.set('checked', true);
 		component.parent.addClass('checked').removeClass('unchecked');
 
 		component.depends.each(function(dependancy){
@@ -98,9 +156,9 @@ var Packager = this.Packager = {
 		var component = components[name],
 			element = component.element;
 
+		if (!component.selected) element.set('checked', false);
 		if (component.selected || component.required.length) return;
 
-		element.set('checked', false);
 		component.parent.addClass('unchecked').removeClass('checked');
 
 		component.depends.each(function(dependancy){
@@ -109,7 +167,8 @@ var Packager = this.Packager = {
 	},
 
 	select: function(name){
-		var component = components[name];
+		var component = components[name],
+			pkg = packages[name.split('/')[0]];
 
 		if (!component){
 			var matches = name.match(/(.+)\/\*$/);
@@ -122,16 +181,27 @@ var Packager = this.Packager = {
 		component.selected = true;
 		component.parent.addClass('selected');
 
+		++pkg.selected;
+
+		if (pkg.select && pkg.selected == pkg.components.length) pkg.select.addClass('disabled');
+		if (pkg.deselect && pkg.selected == 1) pkg.deselect.removeClass('disabled');
+
 		this.check(name);
 	},
 
 	deselect: function(name){
-		var component = components[name];
+		var component = components[name],
+			pkg = packages[name.split('/')[0]];
 
 		if (!component || !component.selected) return;
 
 		component.selected = false;
 		component.parent.removeClass('selected');
+
+		--pkg.selected;
+
+		if (pkg.deselect && !pkg.selected) pkg.deselect.addClass('disabled');
+		if (pkg.select && pkg.selected == pkg.components.length - 1) pkg.select.removeClass('disabled');
 
 		this.uncheck(name);
 	},
@@ -219,8 +289,17 @@ var Packager = this.Packager = {
 	},
 
 	getSelected: function(){
-		var selected = [];
-		for (var name in components) if (components[name].selected) selected.push(name);
+		var name, selected = [];
+
+		for (name in packages){
+			var pkg = packages[name];
+
+			if (pkg.selected == pkg.components.length) selected.push(name + '/*');
+			else pkg.components.each(function(name){
+				if (components[name].selected) selected.push(name);
+			});
+		}
+
 		return selected;
 	},
 
@@ -230,13 +309,37 @@ var Packager = this.Packager = {
 		return disabled;
 	},
 
+	getExcludedBlocks: function(){
+		if (!storage.blocks) return [];
+
+		var excluded = [];
+
+		storage.blocks.each(function(element){
+			if (!element.get('checked')) excluded.push(element.get('value'));
+		});
+
+		return excluded;
+	},
+
+	getCompression: function(){
+		if (!storage.compressors) return null;
+
+		var element = storage.compressors.filter(':checked')[0];
+
+		return ((element) ? element.get('value') : null);
+	},
+
 	toQueryString: function(){
 		var selected = this.getSelected(),
 			disabled = this.getDisabledPackages(),
+			excluded = this.getExcludedBlocks(),
+			compression = this.getCompression(),
 			query = [];
 
 		if (selected.length) query.push('select=' + selected.join(';'));
 		if (disabled.length) query.push('disable=' + disabled.join(';'));
+		if (excluded.length) query.push('exclude=' + excluded.join(';'));
+		if (compression) query.push('compression=' + compression);
 
 		return query.join('&') || '!';
 	},
@@ -259,28 +362,43 @@ var Packager = this.Packager = {
 
 		var parts = query.substr(1).split('&');
 		parts.each(function(part){
-			var split = part.split('=');
+			var split = part.split('='),
+				name = split[0],
+				value = split[1];
 
-			if (split[0] == 'select') split[1].split(';').each(function(name){
-				Packager.select(name);
-			});
+			if (name == 'select'){
+				value.split(';').each(function(name){
+					Packager.select(name);
+				});
+			} else if (name == 'disable'){
+				value.split(';').each(function(name){
+					Packager.disablePackage(name);
+				});
+			} else if (name == 'exclude'){
+				if (!storage.blocks) return;
+				var exclude = value.split(';');
 
-			if (split[0] == 'disable') split[1].split(';').each(function(name){
-				Packager.disablePackage(name);
-			});
+				storage.blocks.each(function(element){
+					if (exclude.contains(element.get('value'))) element.getParent('tr').fireEvent('click');
+				});
+			} else if (name == 'compression'){
+				if (!storage.compressors) return;
+				var compressor = storage.compressors.filter('[value=' + value + ']')[0];
+
+				if (compressor) compressor.getParent('tr').fireEvent('click');
+			}
 		});
 
 		this.setLocationHash();
 	},
 
 	reset: function(){
-		for (var name in components) this.deselect(name);
-		for (var name in packages) this.enablePackage(name);
+		var name;
+		for (name in components) this.deselect(name);
+		for (name in packages) this.enablePackage(name);
 		this.setLocationHash();
 	}
 
 };
-
-document.addEvent('domready', Packager.init);
 
 })();
